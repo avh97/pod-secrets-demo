@@ -1,0 +1,23 @@
+name: build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::565750131516:role/github-build
+          aws-region: eu-north-1
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          IMAGE=${{ steps.ecr.outputs.registry }}/pod-secrets-demo:${GITHUB_SHA::7}-${{ github.run_number }}
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
